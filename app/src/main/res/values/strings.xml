@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">免打扰课表</string>
+    <string name="widget_desc">免打扰课表：显示当前状态与下次触发</string>
+    <string name="widget_small_desc">免打扰课表：紧凑状态</string>
+    <string name="shortcut_pin">添加小组件</string>
+    <string name="shortcut_pin_long">把小组件添加到桌面</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 小组件配色（浅色模式：白卡片） -->
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_text_primary">#1A1D21</color>
+    <color name="widget_text_secondary">#5A6470</color>
+    <color name="widget_text_muted">#8A929C</color>
+    <color name="widget_accent">#2D6BFF</color>
+    <!-- 小组件「已上」标签（区别于「明日」的强调蓝） -->
+    <color name="widget_done">#EF5350</color>
+    <!-- 自适应图标背景（深蓝，配白色静音铃前景） -->
+    <color name="ic_launcher_background">#1F3B70</color>
+</resources>

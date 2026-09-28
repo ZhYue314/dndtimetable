@@ -1,0 +1,13 @@
+*.iml
+.gradle
+/tools/
+/docs/dndtimetable-project-book.md
+/local.properties
+/keystore
+/.idea
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx

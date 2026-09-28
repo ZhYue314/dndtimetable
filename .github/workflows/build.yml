@@ -1,0 +1,24 @@
+name: 构建与测试
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+        with:
+          # 新版 cmdline-tools 已移除 `tools` 包，默认值会导致 sdkmanager 报错退出
+          packages: platform-tools
+      - name: 确保 compileSdk 35
+        run: sdkmanager "platforms;android-35"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: 单元测试
+        run: ./gradlew testDebugUnitTest --console=plain

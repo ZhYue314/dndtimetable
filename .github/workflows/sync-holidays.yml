@@ -1,0 +1,74 @@
+name: 同步节假日表
+on:
+  schedule:
+    - cron: "27 1 1 * *"   # 每月 1 日 UTC 01:27（国办通知 11-12 月发布、一次定稿，低频即可）
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 同步上游（NateScarlet/holiday-cn）并生成 data/holidays.json
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, datetime
+          from datetime import timedelta
+
+          OUT = "data/holidays.json"
+          UP = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{}.json"
+          cur = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {"years": {}}
+          cur.setdefault("years", {})
+          today = datetime.date.today()
+          changed = False
+
+          for y in (today.year, today.year + 1):
+              try:
+                  raw = urllib.request.urlopen(UP.format(y), timeout=30).read()
+                  days = json.loads(raw).get("days", [])
+              except Exception as e:
+                  print("skip {}: {}".format(y, e))
+                  continue
+              if not days:
+                  continue
+              days = sorted(days, key=lambda d: d["date"])
+              runs = []  # [name, start, end] 连续同名休假日
+              for d in days:
+                  if not d.get("isOffDay"):
+                      continue
+                  dt = datetime.date.fromisoformat(d["date"])
+                  nm = d.get("name", "")
+                  if runs and runs[-1][0] == nm and runs[-1][2] + timedelta(days=1) == dt:
+                      runs[-1][2] = dt
+                  else:
+                      runs.append([nm, dt, dt])
+              holidays = [{"name": n, "start": s.isoformat(), "end": e.isoformat()} for n, s, e in runs]
+              # 调休只给「哪天补班」（不带被补日，App 内由用户设置结束日期）
+              makeups = [{"date": d["date"], "name": d.get("name", "调休") + "调休上课"}
+                          for d in days if not d.get("isOffDay")]
+              entry = {"holidays": holidays, "makeups": makeups}
+              if cur["years"].get(str(y)) != entry:
+                  cur["years"][str(y)] = entry
+                  changed = True
+                  print("updated {}".format(y))
+
+          if changed:
+              cur["updated"] = today.isoformat()
+              os.makedirs(os.path.dirname(OUT), exist_ok=True)
+              with open(OUT, "w", encoding="utf-8", newline="\n") as f:
+                  json.dump(cur, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
+          print("CHANGED" if changed else "NOCHANGE")
+          PY
+      - name: 提交
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/holidays.json
+          if git diff --cached --quiet; then
+            echo "无变化"
+          else
+            git commit -m "data: 自动同步节假日表"
+            git push
+          fi

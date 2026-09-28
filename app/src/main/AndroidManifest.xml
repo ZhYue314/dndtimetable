@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 免打扰（L1 兜底）：用户手动授权一次 -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- 精确闹钟调度（后续完整版使用） -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- 常驻状态通知 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 开机后重排闹钟 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 设置铃声音量 -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- 一键导入系统日历（课表写入日历，可读可写；用户可随时移除） -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <!-- 前台服务保活（媒体屏蔽监听；仅上课时运行） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 联网拉取自托管节假日/调休表（仅 HTTPS 静态 JSON；失败回退内置表，数据不上传） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 应用内更新：下载新版本后请求安装 APK -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- 教务网页导入：校方教务系统多为 http，需要放行明文流量（其余联网仅 HTTPS 节假日拉取） -->
+    <application
+        android:name=".DndTimetableApp"
+        android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.DndTimetable"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/Theme.DndTimetable">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- 分享到 dndtimetable：课表文件 / 文字课表 / 课表截图 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/comma-separated-values" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- 免打扰定时触发 -->
+        <receiver
+            android:name=".scheduling.ScheduleReceiver"
+            android:exported="false" />
+
+        <!-- 课中通知卡上的动作（解除媒体屏蔽音） -->
+        <receiver
+            android:name=".notify.NotificationActionReceiver"
+            android:exported="false" />
+
+        <!-- 媒体屏蔽保活前台服务（仅上课时运行，下课即停；START_STICKY 系统可重启）
+             类型用 specialUse：本服务不播放媒体，仅用于课中保住进程以即时响应拔/插耳机事件，
+             声明 mediaPlayback 与实际行为不符（上架审核会被质疑） -->
+        <service
+            android:name=".system.MediaKeepaliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="课堂期间保持免打扰会话：常驻监听拔插耳机以即时重断言媒体屏蔽（不播放媒体）" />
+        </service>
+
+        <!-- 拔耳机后系统会重置媒体静音：会话激活时重新屏蔽 -->
+        <receiver
+            android:name=".system.AudioRouteReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.HEADSET_PLUG" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 用户手动开/关免打扰后系统可能重置媒体静音/铃声：会话激活时补打 -->
+        <receiver
+            android:name=".system.DndChangedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.INTERRUPTION_FILTER_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 开机后重排闹钟 -->
+        <receiver android:name=".scheduling.BootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 系统改时/改时区后重排闹钟 -->
+        <receiver android:name=".scheduling.TimeChangedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 精确闹钟权限授予/撤销后立即重排（Android 12+；低版本收不到） -->
+        <receiver android:name=".scheduling.ExactAlarmPermissionReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 桌面小组件：必须 exported=true，否则启动器无法显示/添加该组件 -->
+        <receiver
+            android:name=".widget.CourseWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/course_widget_info" />
+        </receiver>
+
+        <!-- 分享 App 带 APK：把安装包从缓存经 FileProvider 发出去 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- 小组件固定成功的回调 -->
+        <receiver
+            android:name=".widget.WidgetPinReceiver"
+            android:exported="false" />
+
+    </application>
+</manifest>

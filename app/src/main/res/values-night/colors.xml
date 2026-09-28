@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 小组件配色（深色模式：深灰卡片） -->
+    <color name="widget_bg">#26292E</color>
+    <color name="widget_text_primary">#E8EAED</color>
+    <color name="widget_text_secondary">#B8BEC7</color>
+    <color name="widget_text_muted">#7A828C</color>
+    <color name="widget_accent">#8AB4FF</color>
+</resources>

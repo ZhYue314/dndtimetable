@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 空态提示（近期无课）：填满列表区并居中显示。
+     maxLines=1 + autoSizeTextType=none：防止桌面端（HyperOS 对无行数限制的
+     TextView 做字号自适应）把 14sp 缩成 ~13sp，与横条课程位（singleLine 14sp）不一致。 -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_empty"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:maxLines="1"
+    android:autoSizeTextType="none"
+    android:text="近期无课"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    android:textColor="@color/widget_text_primary" />

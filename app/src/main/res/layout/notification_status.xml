@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 常驻状态卡的**展开态**自定义布局（bigContentView）：
+     折叠态必须用系统标准布局——实测只要设 setCustomContentView，澎湃OS 就把整条通知折叠进「更多通知」。
+     按钮用整行宽度 + 居中文字：wrap_content 在部分 ROM 的通知里会被压窄导致文字挤压。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp">
+
+    <TextView
+        android:id="@+id/notif_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FF1A1D21" />
+
+    <TextView
+        android:id="@+id/notif_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:layout_marginTop="1dp"
+        android:textSize="12sp"
+        android:textColor="#FF5A6470" />
+
+    <TextView
+        android:id="@+id/notif_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="34dp"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:singleLine="true"
+        android:background="@drawable/bg_notif_action"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#FF2D6BFF"
+        android:text="解除媒体屏蔽音" />
+</LinearLayout>
